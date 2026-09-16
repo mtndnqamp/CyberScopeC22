@@ -137,6 +137,25 @@ def get_total_memory():
     return round(psutil.virtual_memory().total / (1024 ** 2), 1)
 
 
+RESOURCE_THRESHOLD_PERCENT = 85
+
+
+def get_cpu_usage_status():
+    """CPU usage: 'Standard' if usage is within threshold, otherwise the actual percentage."""
+    usage = psutil.cpu_percent(interval=1)
+    if usage > RESOURCE_THRESHOLD_PERCENT:
+        return f"{usage}% (exceeds {RESOURCE_THRESHOLD_PERCENT}% threshold)"
+    return "Standard"
+
+
+def get_memory_usage_status():
+    """Memory usage: 'Standard' if usage is within threshold, otherwise the actual percentage."""
+    usage = psutil.virtual_memory().percent
+    if usage > RESOURCE_THRESHOLD_PERCENT:
+        return f"{usage}% (exceeds {RESOURCE_THRESHOLD_PERCENT}% threshold)"
+    return "Standard"
+
+
 # --------------------------------------------------------------------------
 # Software Parameters
 # --------------------------------------------------------------------------
@@ -282,6 +301,8 @@ def get_device_parameters():
         ("spi_interface_status", get_spi_status()),
         ("cpu_architecture_node", get_node_cpu_arch()),
         ("total_memory_mb", get_total_memory()),
+        ("cpu_usage", get_cpu_usage_status()),
+        ("memory_usage", get_memory_usage_status()),
 
         # Software Parameters
         ("os_release", get_os_release()),
