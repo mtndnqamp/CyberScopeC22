@@ -1,0 +1,10 @@
+.worktrees/
+__pycache__/
+*.py[cod]
+.cyberscope-test-resources/
+output/baselines/*.json
+output/evidence/*/
+output/logs/*.log
+output/reports/*.json
+output/reports/*.txt
+prompt.md

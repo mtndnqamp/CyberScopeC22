@@ -1,0 +1,9 @@
+[project]
+name = "cyberscope-security"
+version = "0.1.0"
+description = "Safe IoT device integrity-attestation security testing"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.ruff]
+line-length = 100
