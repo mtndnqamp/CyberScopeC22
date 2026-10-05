@@ -1,0 +1,6 @@
+Ganache (npm install ganache)
+Nodejs
+truffle (npm install -g truffle)
+web3
+solc-js (npm install solc)
+HDWalletProvider + dotenv (npm install @truffle/hdwallet-provider dotenv)
