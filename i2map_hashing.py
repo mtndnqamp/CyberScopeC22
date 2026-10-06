@@ -35,8 +35,8 @@ def generate_runtime_map():
     
 def find_diff(integrity_map, trusted_integrity_map):
     current_params = integrity_map["param_values"]
-    trusted_params = trusted_integrity_map["trusted_integrity_map"]
-    changed_params = [name for name in current_params if name in trusted_params and current_params[name != trusted_params[name]]]
+    trusted_params = trusted_integrity_map["param_values"]
+    changed_params = [name for name in current_params if name in trusted_params and current_params[name] != trusted_params[name]]
     added_params = [name for name in current_params if name not in trusted_params]
     removed_params = [name for name in trusted_params if name not in current_params]
     return {"changed": changed_params, "added": added_params, "removed": removed_params}
@@ -74,7 +74,7 @@ def sensor_data_check(sensor_data, baseline_map):
     return {
         "data_accepted": False,
         "data": None,
-        "reason": f"integrity check failed. mismatches: [report['changed_params']]"
+        "reason": f"integrity check failed. mismatches: {report['changed_params']}"
     }
 # checks whether sensor data should be accepted by checking device integrity, if passed the data moves through, if failed the data is removed and a reason is provided
 # inputs: sensor data to test, trusted baseline
@@ -83,6 +83,10 @@ def sensor_data_check(sensor_data, baseline_map):
 if __name__ == "__main__":
     baseline_map = generate_runtime_map()
     print(baseline_map)
+    print("**********************************")
+    report = check_device_integrity(baseline_map)
+    print("Status = ", report["ok"])
+    print("Changed params = ", report["diff"])
     
 # todo:
 # some testing stuff for the new functions
