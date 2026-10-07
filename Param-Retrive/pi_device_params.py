@@ -76,9 +76,6 @@ def get_cpu_clock_frequency():
     return None
 
 
-def get_cpu_utilization():
-    """Current CPU utilization as a percentage (1-second sample)."""
-    return psutil.cpu_percent(interval=1)
 
 
 def get_voltage_supply():
@@ -220,6 +217,14 @@ def get_python_packages():
     return []
 
 
+def get_pip_packages():
+    """Installed Python packages, as 'name==version' strings (via pip)."""
+    output = run_command(f"{sys.executable} -m pip list --format=freeze")
+    if output:
+        return output.splitlines()
+    return []
+
+
 # --------------------------------------------------------------------------
 # Network & Device Config
 # --------------------------------------------------------------------------
@@ -295,7 +300,6 @@ def get_device_parameters():
         ("mac_address", get_mac_address()),
         ("hardware_serial_number", get_serial_number()),
         ("cpu_clock_frequency_mhz", get_cpu_clock_frequency()),
-        ("cpu_utilization_percent", get_cpu_utilization()),
         ("voltage_supply", get_voltage_supply()),
         ("jtag_interface_status", get_jtag_status()),
         ("spi_interface_status", get_spi_status()),
@@ -314,6 +318,7 @@ def get_device_parameters():
         ("process_title", get_process_title()),
         ("installed_package_count", get_installed_package_count()),
         ("python_packages", get_python_packages()),
+        ("pip_packages", get_pip_packages()),
 
         # Network & Device Config
         ("network_interfaces", get_network_interfaces()),
