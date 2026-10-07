@@ -1,4 +1,10 @@
 import hashlib
+import json
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "Param-Retrive"))
 
 from pi_device_params import get_device_parameters
 
@@ -12,7 +18,9 @@ def sha256(value):
 
 def build_integrity_map(params):
     values = {name: value for name, value in params}
-    root = sha256("".join(str(v) for _, v in sorted(params)))
+    if len(values) != len(params):
+        raise ValueError("Duplicate parameter names")
+    root = sha256(json.dumps(values, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False))
     return {"param_values": values, "root_hash": root}
 # builds an i2map from a list of parameters that stores the parameters alongside a sha256 hash
 # input: list of parameters
@@ -32,7 +40,7 @@ def generate_runtime_map():
 # generates an integrity map based on device's current parameters
 # inputs: none
 # outputs: i2map
-    
+
 def find_diff(integrity_map, trusted_integrity_map):
     current_params = integrity_map["param_values"]
     trusted_params = trusted_integrity_map["param_values"]
@@ -49,7 +57,8 @@ def check_device_integrity(baseline_map):
     if verify(current_map, baseline_map["root_hash"]):
         return {
             "ok": True,
-            "current_map": current_map
+            "current_map": current_map,
+            "diff": {"changed": [], "added": [], "removed": []}
         }
     changed_params = find_diff(current_map, baseline_map)
     return {
@@ -63,18 +72,18 @@ def check_device_integrity(baseline_map):
 
 def sensor_data_check(sensor_data, baseline_map):
     report = check_device_integrity(baseline_map)
-    
+
     if report["ok"]:
         return {
-            "data_accepted": True, 
-            "data": sensor_data, 
+            "data_accepted": True,
+            "data": sensor_data,
             "reason": "passed integrity check"
         }
-    
+
     return {
         "data_accepted": False,
         "data": None,
-        "reason": f"integrity check failed. mismatches: {report['changed_params']}"
+        "reason": f"integrity check failed. mismatches: {report['diff']}"
     }
 # checks whether sensor data should be accepted by checking device integrity, if passed the data moves through, if failed the data is removed and a reason is provided
 # inputs: sensor data to test, trusted baseline
@@ -86,8 +95,8 @@ if __name__ == "__main__":
     print("**********************************")
     report = check_device_integrity(baseline_map)
     print("Status = ", report["ok"])
-    print("Changed params = ", report["diff"])
-    
+    print("Changed params = ", report.get("diff", {}))
+
 # todo:
 # some testing stuff for the new functions
 # loop that listens for sensor data to run the data check

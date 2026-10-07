@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "start": "node dev-chain.cjs"
+  },
+  "dependencies": {
+    "ganache": "7.9.2",
+    "solc": "0.8.37",
+    "web3": "4.16.0"
+  }
+}

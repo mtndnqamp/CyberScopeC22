@@ -1,0 +1,1 @@
+{"hostname":"demo-pi","pip_packages":["psutil==7.2.2","example-package==1.0"],"cpu_usage":"Standard"}

@@ -24,6 +24,8 @@ import shutil
 import statistics
 import subprocess
 import time
+import sys
+from pathlib import Path
 from datetime import datetime
 
 # ---------------------------------------------------------------------------
@@ -33,7 +35,7 @@ from datetime import datetime
 # The command that runs ONE integrity check. Replace with the team's real one.
 # Examples:  ["python3", "/home/pi/cyberscope/check.py"]
 #            ["node", "/home/pi/cyberscope/i2map.js"]
-DEFAULT_CHECK_COMMAND = ["python3", "check.py"]
+DEFAULT_CHECK_COMMAND = [sys.executable, str(Path(__file__).with_name("integrity_check.py")), "--no-alert"]
 
 # How do we know if a run said "compromised"?
 #   "exit_code" -> script exits 0 when the device is OK, non-zero when flagged
@@ -49,7 +51,7 @@ OK_KEYWORDS = ["match", "verified", "accepted", "ok", "pass"]
 def decide_verdict(exit_code, output):
     """Return 'ok', 'flagged', or 'unclear' for a single run."""
     if VERDICT_MODE == "exit_code":
-        return "ok" if exit_code == 0 else "flagged"
+        return {0: "ok", 1: "flagged"}.get(exit_code, "unclear")
 
     text = output.lower()
     if any(word in text for word in FLAGGED_KEYWORDS):
@@ -70,11 +72,10 @@ def run_once(command, measure_memory):
         full_command = ["/usr/bin/time", "-v"] + full_command
 
     start = time.perf_counter()
-    result = subprocess.run(
-        full_command,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        result = subprocess.run(full_command, capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        return "unclear", time.perf_counter() - start, "", 2, type(error).__name__
     seconds = time.perf_counter() - start
 
     output = (result.stdout or "") + (result.stderr or "")
@@ -151,6 +152,8 @@ def main():
     parser.add_argument("--command", default=None,
                         help='the check command, quoted, e.g. --command "python3 check.py --flag"')
     args = parser.parse_args()
+    if args.runs < 1 or args.delay < 0:
+        parser.error("runs must be positive and delay nonnegative")
 
     command = shlex.split(args.command) if args.command else DEFAULT_CHECK_COMMAND
     measure_memory = not args.no_memory

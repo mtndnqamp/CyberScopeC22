@@ -20,6 +20,7 @@ import socket
 import getpass
 import platform
 import subprocess
+import json
 
 try:
     import psutil
@@ -219,10 +220,15 @@ def get_python_packages():
 
 def get_pip_packages():
     """Installed Python packages, as 'name==version' strings (via pip)."""
-    output = run_command(f"{sys.executable} -m pip list --format=freeze")
-    if output:
-        return output.splitlines()
-    return []
+    try:
+        output = subprocess.check_output(
+            [sys.executable, "-m", "pip", "list", "--format=json", "--disable-pip-version-check"],
+            text=True, stderr=subprocess.DEVNULL, timeout=30,
+        )
+        packages = json.loads(output)
+        return sorted(f"{item['name'].lower().replace('_', '-')}=={item['version']}" for item in packages)
+    except (subprocess.SubprocessError, OSError, ValueError, KeyError):
+        raise RuntimeError("Pip inventory could not be collected; integrity check is incomplete")
 
 
 # --------------------------------------------------------------------------
