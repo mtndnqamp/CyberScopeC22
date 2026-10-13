@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f1e9">
+  <title>CyberScope — IoT integrity attestation</title>
+  <link rel="stylesheet" href="vendor/reveal.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+      <section id="problem" aria-labelledby="problem-title">
+        <header class="slide-header"><h1 id="problem-title">Problem statement<span class="period">.</span></h1><span class="wordmark">CyberScope</span></header>
+        <div class="problem-layout">
+          <div class="problem-story">
+            <h2>A working device.<br><span class="cobalt">Untrustworthy data.</span></h2>
+            <ul class="problem-points">
+              <li>IoT devices are difficult to secure.</li>
+              <li>Compromise can have a large blast radius<br>and far-reaching effects.</li>
+            </ul>
+            <svg class="blast-diagram" viewBox="0 0 640 250" role="img" aria-labelledby="blast-title blast-desc">
+              <title id="blast-title">One compromised device affects connected systems</title>
+              <desc id="blast-desc">A changed IoT device connects to industrial control, a smart home and an autonomous system.</desc>
+              <g class="blast-lines"><path d="M145 120H255Q285 120 285 85V45H410"/><path d="M145 120H410"/><path d="M145 120H255Q285 120 285 155V200H410"/></g>
+              <circle cx="113" cy="120" r="47" class="blast-origin"/>
+              <g class="icon" transform="translate(87 94)"><rect width="52" height="52" rx="5"/><rect x="13" y="13" width="26" height="26" rx="2"/><path d="M10-8V0M26-8V0M42-8V0M10 52V60M26 52V60M42 52V60M-8 10H0M-8 26H0M-8 42H0M52 10H60M52 26H60M52 42H60"/></g>
+              <g class="icon endpoint" transform="translate(417 24)"><path d="M0 40V12L16 24V12L32 24V0H42V40Z"/><path d="M9 31H13M22 31H26M34 31H38"/></g>
+              <g class="icon endpoint" transform="translate(417 98)"><path d="M0 19L21 0L42 19M5 16V42H37V16M16 42V27H26V42"/></g>
+              <g class="icon endpoint" transform="translate(417 181)"><path d="M1 27L8 7H34L41 27V40H33V33H9V40H1ZM1 27H41M8 7L12 0H30L34 7M9 28H13M29 28H33"/></g>
+              <g class="blast-labels"><text x="480" y="51">Industrial control</text><text x="480" y="128">Smart homes</text><text x="480" y="210">Autonomous systems</text><text x="48" y="211" class="changed-label">Changed device</text></g>
+              <circle cx="243" cy="120" r="5" class="blast-dot"/><circle cx="348" cy="45" r="5" class="blast-dot"/><circle cx="348" cy="200" r="5" class="blast-dot"/>
+            </svg>
+          </div>
+          <div class="problem-evidence">
+            <div class="stat-row"><strong class="stat">56<span>%</span></strong><p>cannot see below<br>the IT/OT boundary.</p></div>
+            <div class="stat-row"><strong class="stat">88<span>%</span></strong><p>struggle with detection<br>and response.</p></div>
+            <p class="source-context">Findings from Dragos’s OT assessments and exercises;<br>not a survey of all ICS owners.</p>
+            <a class="source" href="https://www.dragos.com/ot-cybersecurity-year-in-review" target="_blank" rel="noopener">Source: Dragos · 2026 OT Cybersecurity Year in Review <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <footer class="slide-footer"><p>CyberScope asks: <strong>has this device moved away from its trusted state?</strong></p><span>Problem / Method / Demo</span></footer>
+        <aside class="notes">
+          IoT devices are being used more widely in everyday settings and critical environments, from smart homes to industrial and autonomous systems.
+          All of these systems rely on sensor data they can trust.
+          The I2Map research shows that an attacker who compromises an IoT device could change its hardware, software, network configuration or other settings. The device may continue operating, even though its data can no longer be assumed to be legitimate.
+          CyberScope is designed to detect those unauthorised changes and show when a Raspberry Pi-based IoT device has moved away from its known trusted state.
+          The statistics are findings from Dragos engagements, not prevalence estimates for all ICS owners. 56% cannot see below the IT/OT boundary; 88% struggle with detection and response.
+        </aside>
+      </section>
+      <section id="methodology" aria-labelledby="method-title">
+        <header class="slide-header"><h1 id="method-title">Design &amp; methodology<span class="period">.</span></h1><span class="wordmark">CyberScope</span></header>
+        <div class="method-intro"><p>One trusted baseline. Every runtime reading checked.</p><span class="architecture-label">Proposed architecture</span></div>
+        <div class="diagram-wrap">
+          <svg id="system-diagram" viewBox="0 0 1536 550" role="img" aria-labelledby="system-title system-desc">
+            <title id="system-title">CyberScope onboarding and runtime attestation</title>
+            <desc id="system-desc">An administrator approves a device baseline. Selected parameters are hashed using SHA-256 and stored through a private Ethereum blockchain. The runtime digest is compared against the baseline. Matching monitored state allows sensor data through; changed state rejects data and alerts the administrator. This diagram depicts the proposed architecture.</desc>
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker>
+              <clipPath id="hash-glyph-region"><path d="M454 305A62 62 0 1 0 330 305A62 62 0 1 0 454 305Z M337 280H447V329H337Z" clip-rule="evenodd"/></clipPath>
+            </defs>
+            <g class="zones">
+              <rect x="36" y="155" width="710" height="322" rx="16"/>
+              <rect x="800" y="155" width="376" height="322" rx="16"/>
+            </g>
+            <g class="zone-labels">
+              <text x="56" y="186">Raspberry Pi VM</text>
+              <text x="720" y="186" text-anchor="end" class="zone-detail">IoT test device</text>
+              <text x="820" y="186">Private Ethereum blockchain</text>
+            </g>
+            <g class="connections" fill="none" marker-end="url(#arrow)">
+              <path id="approve-path" d="M594 50H292Q272 50 272 70V190Q272 208 254 208H172Q154 208 154 226V230" class="admin-path"/>
+              <path id="onboard-path" d="M392 243V118Q392 100 410 100H656Q674 100 674 86" class="onboard-path"/>
+              <path id="register-path" d="M824 50H1182Q1200 50 1200 68V222Q1200 240 1182 240H1150" class="onboard-path"/>
+              <path id="parameter-path" d="M252 305H330"/>
+              <path id="digest-path" d="M454 305H534"/>
+              <path id="sensor-path" d="M485 432H614Q632 432 632 414V375" class="sensor-path"/>
+              <path id="submit-path" d="M698 305H826"/>
+              <path id="baseline-path" d="M988 269V298" class="baseline-path"/>
+              <path id="accept-path" d="M1150 341H1220Q1238 341 1238 323V277Q1238 259 1256 259H1280" class="accept-path"/>
+              <path id="reject-path" d="M1150 369H1220Q1238 369 1238 387V415Q1238 433 1256 433H1280" class="reject-path"/>
+              <path id="consumer-path" d="M1400 296V325" class="accept-path"/>
+              <path id="alert-path" d="M1400 470V492Q1400 510 1418 510H1506Q1524 510 1524 492V20Q1524 2 1506 2H727Q709 2 709 14" class="alert-path"/>
+            </g>
+            <g class="path-labels">
+              <text x="340" y="28">Approve known-good state</text>
+              <text x="430" y="132">Base I2Map</text>
+              <text x="903" y="28">Register approved baseline</text>
+              <text x="705" y="286">Submit</text>
+              <text x="1248" y="207">Match</text>
+              <text x="1190" y="461">Mismatch</text>
+              <text x="1083" y="541" text-anchor="middle">Alert administrator / restore approved state</text>
+            </g>
+            <g id="admin-node" class="node admin-node">
+              <rect x="594" y="14" width="230" height="72" rx="12"/>
+              <text x="709" y="44" text-anchor="middle">Administrator</text>
+              <text x="709" y="68" text-anchor="middle" class="node-sub">Approve / restore</text>
+            </g>
+            <g id="params-node" class="node params-node">
+              <rect x="56" y="230" width="196" height="148" rx="12"/>
+              <text x="74" y="258">Device parameters</text>
+              <g class="parameter-list"><text x="74" y="286">Hardware</text><text x="74" y="309">Software</text><text x="74" y="332">Network / config</text><text x="74" y="355">Environment</text></g>
+              <g class="parameter-marks"><circle cx="234" cy="280" r="3"/><circle cx="234" cy="303" r="3"/><circle cx="234" cy="326" r="3"/><circle cx="234" cy="349" r="3"/></g>
+            </g>
+            <g id="hash-node" class="hash-node">
+              <circle cx="392" cy="305" r="62"/>
+              <circle class="hash-orbit" cx="392" cy="305" r="70"/>
+              <g id="hash-cloud" clip-path="url(#hash-glyph-region)"></g>
+              <text x="392" y="298" text-anchor="middle" class="hash-title">SHA-256</text>
+              <text x="392" y="321" text-anchor="middle" class="hash-sub">I2Map generator</text>
+            </g>
+            <text x="392" y="397" text-anchor="middle" class="hash-caption">Parameters → digest</text>
+            <g class="node sensor-node"><rect x="300" y="408" width="185" height="48" rx="9"/><text x="392" y="438" text-anchor="middle">Sensor data</text></g>
+            <g id="agent-node" class="node agent-node">
+              <rect x="534" y="245" width="164" height="130" rx="12"/>
+              <text x="616" y="275" text-anchor="middle">CyberScope</text>
+              <text x="616" y="300" text-anchor="middle">attestation</text>
+              <text x="616" y="325" text-anchor="middle">agent</text>
+              <text x="616" y="353" text-anchor="middle" class="node-sub">I2Map + sensor data</text>
+            </g>
+            <g id="baseline-node" class="node baseline-node">
+              <rect x="826" y="213" width="324" height="56" rx="9"/>
+              <text x="844" y="247">Base I2Map</text><text id="baseline-digest" x="1132" y="247" text-anchor="end" class="digest-text">—</text>
+            </g>
+            <g id="verifier-node" class="node verifier-node">
+              <rect x="826" y="298" width="324" height="110" rx="12"/>
+              <text x="988" y="330" text-anchor="middle">Attestation smart contract</text>
+              <text x="988" y="357" text-anchor="middle" class="node-sub">Verifier nodes · compare I2Maps</text>
+              <text id="comparison-text" x="988" y="391" text-anchor="middle" class="comparison-text">Awaiting baseline</text>
+            </g>
+            <g id="ledger-bars"><rect x="903" y="432" width="45" height="7" rx="2"/><rect x="966" y="432" width="45" height="7" rx="2"/><rect x="1029" y="432" width="45" height="7" rx="2"/></g>
+            <text x="988" y="461" text-anchor="middle" class="node-sub">Approved baseline remains unchanged</text>
+            <g id="accepted-node" class="node accepted-node">
+              <rect x="1280" y="221" width="240" height="75" rx="12"/>
+              <path d="M1299 245L1307 253L1322 237" class="outcome-icon"/>
+              <text x="1330" y="251">Accept sensor data</text>
+              <text x="1298" y="277" class="node-sub">Monitored state unchanged</text>
+            </g>
+            <g id="consumer-node" class="node consumer-node">
+              <rect x="1280" y="325" width="240" height="61" rx="9"/>
+              <text x="1400" y="349" text-anchor="middle">Sensor-data consumer</text>
+              <text x="1400" y="376" text-anchor="middle" class="node-sub">IoT / autonomous system</text>
+            </g>
+            <g id="rejected-node" class="node rejected-node">
+              <rect x="1280" y="396" width="240" height="74" rx="12"/>
+              <path d="M1300 417L1316 433M1316 417L1300 433" class="outcome-icon"/>
+              <text x="1330" y="426">Reject &amp; raise alert</text>
+              <text x="1298" y="452" class="node-sub">Changed state detected</text>
+            </g>
+            <g id="tamper-marker" visibility="hidden">
+              <rect x="70" y="408" width="170" height="48" rx="8"/>
+              <path d="M86 423H103V440H86ZM91 423V416H98V423"/>
+              <text x="113" y="439">USB added</text>
+            </g>
+            <g id="packet-layer" aria-hidden="true"></g>
+            <g id="storage-ripple" aria-hidden="true"><rect x="826" y="213" width="324" height="56" rx="9"/></g>
+          </svg>
+        </div>
+        <div class="scenario-strip">
+          <div class="scenario-copy"><span id="phase-name">Onboarding</span><p id="phase-description">Collect known-good state and register the approved baseline.</p></div>
+          <div class="phase-track" aria-label="Animation phases"><span data-phase="onboarding" class="active">Onboard</span><span data-phase="matching">Accept</span><span data-phase="tampered">Reject</span><span data-phase="restoring">Restore</span></div>
+          <button id="motion-toggle" type="button" aria-pressed="false" aria-label="Pause diagram animation"><svg viewBox="0 0 20 20" aria-hidden="true"><path id="motion-symbol" d="M6 4V16M14 4V16"/></svg><span>Pause</span></button>
+        </div>
+        <footer class="slide-footer"><p>Collect → hash → compare → decide</p><span>Illustrative flow · SHA-256 hashing, not encryption</span></footer>
+        <aside class="notes">
+          We're using a Raspberry Pi VM as the IoT test device.
+          Our proposed technology stack includes Python for collecting hardware, software, network and device configuration, and selected environmental parameters. The collected data will generate a SHA-256 integrity map, with Solidity smart contracts on a private Ethereum-compatible blockchain.
+          The architecture has two stages: onboarding and runtime attestation. During onboarding, we collect the selected parameters while the device is known to be legitimate. These generate the Base I2Map, our approved trusted baseline, registered through the blockchain.
+          During runtime, we repeat parameter collection and generate a runtime I2Map. If the hashes match, the monitored configuration is unchanged and sensor data is accepted. If they differ, sensor data is rejected and the administrator is alerted.
+          This depicts our proposed architecture. The current repository contract stores and retrieves hashes; integrated comparison, data gating and sensor transactions remain proposed. Matching monitored state is not a guarantee that all sensor readings are legitimate. Environmental coverage depends on available measurements.
+          We're building in modules and working to milestones: parameter collection, SHA-256 integrity-map generation, blockchain functionality and final integration. Team roles cover Raspberry Pi collection, integrity-map logic, blockchain development, security testing and performance evaluation.
+          Once integrated, we'll validate through deliberate software changes, network/configuration modifications and unauthorised USB connection. We'll check for integrity mismatches, repeat unchanged-device checks to measure false positives, and record execution time, transaction commit time and memory usage. The animation uses illustrative values and is not a live test or benchmark.
+        </aside>
+      </section>
+    </div>
+  </div>
+  <nav class="deck-nav" aria-label="Slide navigation"><button id="previous-slide" type="button" aria-label="Previous slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5L8 12L15 19"/></svg></button><span id="slide-count">1 / 2</span><button id="next-slide" type="button" aria-label="Next slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5L16 12L9 19"/></svg></button></nav>
+  <script src="vendor/reveal.js"></script>
+  <script src="vendor/notes.js"></script>
+  <script src="animation.js"></script>
+</body>
+</html>
