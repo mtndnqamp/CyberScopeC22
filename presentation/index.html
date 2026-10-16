@@ -51,9 +51,9 @@
       </section>
       <section id="methodology" aria-labelledby="method-title">
         <header class="slide-header"><h1 id="method-title">Design &amp; methodology<span class="period">.</span></h1><span class="wordmark">CyberScope</span></header>
-        <div class="method-intro"><p>One trusted baseline. Every runtime reading checked.</p><span class="architecture-label">Proposed architecture</span></div>
+        <div class="method-intro"><p>Collect → hash → compare → decide</p></div>
         <div class="diagram-wrap">
-          <svg id="system-diagram" viewBox="0 0 1536 550" role="img" aria-labelledby="system-title system-desc">
+          <svg id="system-diagram" viewBox="0 0 1576 550" role="img" aria-labelledby="system-title system-desc">
             <title id="system-title">CyberScope onboarding and runtime attestation</title>
             <desc id="system-desc">An administrator approves a device baseline. Selected parameters are hashed using SHA-256 and stored through a private Ethereum blockchain. The runtime digest is compared against the baseline. Matching monitored state allows sensor data through; changed state rejects data and alerts the administrator. This diagram depicts the proposed architecture.</desc>
             <defs>
@@ -61,8 +61,8 @@
               <clipPath id="hash-glyph-region"><path d="M454 305A62 62 0 1 0 330 305A62 62 0 1 0 454 305Z M337 280H447V329H337Z" clip-rule="evenodd"/></clipPath>
             </defs>
             <g class="zones">
-              <rect x="36" y="155" width="710" height="322" rx="16"/>
-              <rect x="800" y="155" width="376" height="322" rx="16"/>
+              <rect class="device-zone" x="36" y="155" width="710" height="322" rx="16"/>
+              <rect class="chain-zone" x="800" y="155" width="376" height="322" rx="16"/>
             </g>
             <g class="zone-labels">
               <text x="56" y="186">Raspberry Pi VM</text>
@@ -81,16 +81,17 @@
               <path id="accept-path" d="M1150 341H1220Q1238 341 1238 323V277Q1238 259 1256 259H1280" class="accept-path"/>
               <path id="reject-path" d="M1150 369H1220Q1238 369 1238 387V415Q1238 433 1256 433H1280" class="reject-path"/>
               <path id="consumer-path" d="M1400 296V325" class="accept-path"/>
-              <path id="alert-path" d="M1400 470V492Q1400 510 1418 510H1506Q1524 510 1524 492V20Q1524 2 1506 2H727Q709 2 709 14" class="alert-path"/>
+              <path id="alert-path" d="M1400 470V492Q1400 510 1418 510H1538Q1556 510 1556 492V20Q1556 2 1538 2H727Q709 2 709 14" class="alert-path"/>
             </g>
+            <g id="packet-layer" aria-hidden="true"></g>
             <g class="path-labels">
-              <text x="340" y="28">Approve known-good state</text>
-              <text x="430" y="132">Base I2Map</text>
-              <text x="903" y="28">Register approved baseline</text>
-              <text x="705" y="286">Submit</text>
-              <text x="1248" y="207">Match</text>
-              <text x="1190" y="461">Mismatch</text>
-              <text x="1083" y="541" text-anchor="middle">Alert administrator / restore approved state</text>
+              <text data-routes="approve-path" x="340" y="28">Approve known-good state</text>
+              <text data-routes="onboard-path" x="430" y="132">Base I2Map</text>
+              <text data-routes="register-path" x="903" y="28">Register approved baseline</text>
+              <text data-routes="submit-path" x="705" y="286">Submit</text>
+              <text data-routes="accept-path" x="1248" y="207">Match</text>
+              <text data-routes="reject-path" x="1190" y="461">Mismatch</text>
+              <text data-routes="alert-path" x="1083" y="541" text-anchor="middle">Alert administrator / restore approved state</text>
             </g>
             <g id="admin-node" class="node admin-node">
               <rect x="594" y="14" width="230" height="72" rx="12"/>
@@ -110,7 +111,7 @@
               <text x="392" y="298" text-anchor="middle" class="hash-title">SHA-256</text>
               <text x="392" y="321" text-anchor="middle" class="hash-sub">I2Map generator</text>
             </g>
-            <text x="392" y="397" text-anchor="middle" class="hash-caption">Parameters → digest</text>
+            <text data-routes="parameter-path digest-path onboard-path" x="392" y="397" text-anchor="middle" class="hash-caption">Parameters → digest</text>
             <g class="node sensor-node"><rect x="300" y="408" width="185" height="48" rx="9"/><text x="392" y="438" text-anchor="middle">Sensor data</text></g>
             <g id="agent-node" class="node agent-node">
               <rect x="534" y="245" width="164" height="130" rx="12"/>
@@ -153,16 +154,25 @@
               <path d="M86 423H103V440H86ZM91 423V416H98V423"/>
               <text x="113" y="439">USB added</text>
             </g>
-            <g id="packet-layer" aria-hidden="true"></g>
             <g id="storage-ripple" aria-hidden="true"><rect x="826" y="213" width="324" height="56" rx="9"/></g>
           </svg>
         </div>
-        <div class="scenario-strip">
-          <div class="scenario-copy"><span id="phase-name">Onboarding</span><p id="phase-description">Collect known-good state and register the approved baseline.</p></div>
-          <div class="phase-track" aria-label="Animation phases"><span data-phase="onboarding" class="active">Onboard</span><span data-phase="matching">Accept</span><span data-phase="tampered">Reject</span><span data-phase="restoring">Restore</span></div>
-          <button id="motion-toggle" type="button" aria-pressed="false" aria-label="Pause diagram animation"><svg viewBox="0 0 20 20" aria-hidden="true"><path id="motion-symbol" d="M6 4V16M14 4V16"/></svg><span>Pause</span></button>
+        <div class="activity-controls">
+          <div class="activity-panel" role="region" aria-labelledby="activity-title">
+            <h2 id="activity-title">Current activity</h2>
+            <ol id="activity-list"></ol>
+          </div>
+          <div class="scenario-controls" role="group" aria-label="Scenarios">
+            <div class="scenario-options">
+              <button type="button" data-scenario="0" aria-pressed="true">Scenario 1 <span>Onboard &amp; accept</span></button>
+              <button type="button" data-scenario="1" aria-pressed="false">Scenario 2 <span>Reject &amp; restore</span></button>
+            </div>
+            <div class="scenario-arrows">
+              <button id="previous-scenario" type="button" aria-label="Previous scenario" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 15L12 8L19 15"/></svg></button>
+              <button id="next-scenario" type="button" aria-label="Next scenario"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9L12 16L19 9"/></svg></button>
+            </div>
+          </div>
         </div>
-        <footer class="slide-footer"><p>Collect → hash → compare → decide</p><span>Illustrative flow · SHA-256 hashing, not encryption</span></footer>
         <aside class="notes">
           We're using a Raspberry Pi VM as the IoT test device.
           Our proposed technology stack includes Python for collecting hardware, software, network and device configuration, and selected environmental parameters. The collected data will generate a SHA-256 integrity map, with Solidity smart contracts on a private Ethereum-compatible blockchain.
