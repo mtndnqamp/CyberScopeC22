@@ -189,6 +189,38 @@ html {
   font-weight:700;
   letter-spacing:-.03em;
 }
+.title-content {
+  padding-top:124px;
+}
+.reveal #project-title {
+  font-size:128px;
+  letter-spacing:-.055em;
+}
+.reveal .title-subtitle {
+  font-size:36px;
+  margin-top:24px;
+  letter-spacing:-.025em;
+}
+.title-team {
+  margin-top:126px;
+  padding-top:28px;
+  border-top:1px solid var(--ink);
+}
+.reveal .title-team h2 {
+  font-size:18px;
+  letter-spacing:0;
+  color:var(--muted);
+  margin-bottom:24px;
+}
+.reveal .team-names {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px 66px;
+  list-style:none;
+  margin:0;
+  padding:0;
+  font-size:28px;
+}
 .slide-footer {
   position:absolute;
   bottom:66px;
@@ -280,9 +312,29 @@ html {
 }
 .blast-dot {
   fill:var(--red);
+  offset-anchor:0 0;
+  offset-rotate:0deg;
+  offset-distance:45%;
+}
+.problem-motion .blast-dot {
+  animation:blast-flow 6s linear 2s infinite both;
+}
+.problem-motion .blast-dot + .blast-dot {
+  animation-delay:2.15s;
+}
+.problem-motion .blast-dot + .blast-dot + .blast-dot {
+  animation-delay:2.3s;
+}
+@keyframes blast-flow {
+  0% { offset-distance:0%; opacity:.8; }
+  21.6667% { offset-distance:100%; opacity:.8; }
+  21.8%,100% { offset-distance:100%; opacity:0; }
 }
 .problem-evidence {
   padding-top:0;
+}
+.reveal #problem .fragment {
+  transition:opacity .22s ease, visibility .22s ease;
 }
 .stat-row {
   display:flex;
@@ -303,7 +355,12 @@ html {
   color:var(--cobalt);
   white-space:nowrap;
 }
-.stat span {
+.stat-value {
+  display:inline-block;
+  min-width:2ch;
+  text-align:right;
+}
+.stat .stat-percent {
   font-size:59px;
   vertical-align:top;
   display:inline-block;

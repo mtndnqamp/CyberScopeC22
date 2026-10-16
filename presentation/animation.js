@@ -268,12 +268,55 @@
     previousTime = null;
     if (eligible()) frameId = requestAnimationFrame(tick);
   }
+
+  const evidence = document.querySelector('.problem-evidence');
+  const statistics = [...document.querySelectorAll('.stat-value')];
+  let countFrame = null;
+  const blastPaths = [...document.querySelectorAll('.blast-lines path')];
+  document.querySelectorAll('.blast-dot').forEach((dot, index) => {
+    dot.style.offsetPath = `path("${blastPaths[index].getAttribute('d')}")`;
+    dot.setAttribute('cx', 0);
+    dot.setAttribute('cy', 0);
+    dot.setAttribute('aria-hidden', 'true');
+  });
+  function problemActive() {
+    return Reveal.isReady() && Reveal.getCurrentSlide()?.id === 'problem' &&
+      !document.hidden && !Reveal.isOverview() && !Reveal.isPaused();
+  }
+  function settleStatistics() {
+    if (countFrame !== null) cancelAnimationFrame(countFrame);
+    countFrame = null;
+    statistics.forEach(stat => stat.textContent = stat.dataset.target);
+  }
+  function synchronizeOpening() {
+    const active = problemActive();
+    document.body.classList.toggle('problem-motion', active && !reduceMotion.matches);
+    if (!active || reduceMotion.matches || !evidence.classList.contains('visible')) settleStatistics();
+  }
+  function countStatistics() {
+    settleStatistics();
+    if (!problemActive() || reduceMotion.matches) return;
+    statistics.forEach(stat => stat.textContent = '0');
+    const start = performance.now();
+    function count(now) {
+      const progress = Math.min(1, (now - start) / 900);
+      const eased = 1 - (1 - progress) ** 3;
+      statistics.forEach(stat => stat.textContent = Math.round(Number(stat.dataset.target) * eased));
+      countFrame = progress < 1 ? requestAnimationFrame(count) : null;
+    }
+    countFrame = requestAnimationFrame(count);
+  }
+  Reveal.on('fragmentshown', event => {
+    if (event.fragment === evidence) countStatistics();
+  });
   function updateNav() {
     const index = Reveal.getIndices().h;
-    document.querySelector('#slide-count').textContent = `${index + 1} / 2`;
-    document.querySelector('#previous-slide').disabled = index === 0;
-    document.querySelector('#next-slide').disabled = index === 1;
+    const fragments = Reveal.availableFragments();
+    document.querySelector('#slide-count').textContent = `${index + 1} / ${Reveal.getTotalSlides()}`;
+    document.querySelector('#previous-slide').disabled = index === 0 && !fragments.prev;
+    document.querySelector('#next-slide').disabled = Reveal.isLastSlide() && !fragments.next;
     synchronize();
+    synchronizeOpening();
   }
   ui.options.forEach((option, index) => option.addEventListener('click', () => selectScenario(index)));
   ui.previous.addEventListener('click', () => selectScenario(scenarioIndex - 1));
@@ -290,9 +333,9 @@
   }, true);
   document.querySelector('#previous-slide').addEventListener('click', () => Reveal.prev());
   document.querySelector('#next-slide').addEventListener('click', () => Reveal.next());
-  document.addEventListener('visibilitychange', synchronize);
-  reduceMotion.addEventListener('change', () => { render(elapsed); synchronize(); });
-  for (const event of ['slidechanged', 'overviewshown', 'overviewhidden', 'paused', 'resumed']) Reveal.on(event, updateNav);
+  document.addEventListener('visibilitychange', () => { synchronize(); synchronizeOpening(); });
+  reduceMotion.addEventListener('change', () => { render(elapsed); synchronize(); synchronizeOpening(); });
+  for (const event of ['slidechanged', 'fragmentshown', 'fragmenthidden', 'overviewshown', 'overviewhidden', 'paused', 'resumed']) Reveal.on(event, updateNav);
   selectScenario(0);
   Reveal.initialize({ width: 1600, height: 900, margin: .02, minScale: .1, maxScale: 2,
     controls: false, progress: true, hash: true, center: false, transition: 'fade', transitionSpeed: 'fast',
