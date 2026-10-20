@@ -36,7 +36,7 @@ We use the I2Map approach to collect selected device parameters and compare the 
 
 ### Collect, hash, compare, decide
 
-Our test device is a Raspberry Pi VM. We use Python to collect selected hardware, software, network and configuration parameters. The environmental parameters we can monitor depend on the measurements available.
+Our test device is a physical Raspberry Pi running the CyberScope client. The design uses three separate hosts for the client, the verifier and the blockchain. We use Python on the Pi to collect selected hardware, software, network and configuration parameters. The environmental parameters we can monitor depend on the measurements available.
 
 We then hash the collected values with SHA-256 to produce an integrity map, or I2Map. Hashing produces a digest; it doesn't encrypt the values.
 
@@ -44,23 +44,23 @@ We then hash the collected values with SHA-256 to produce an integrity map, or I
 
 [Select Scenario 1: Onboard & accept. Let it loop while explaining.]
 
-First, the administrator approves a device configuration known to be legitimate. We collect its parameters and generate the Base I2Map, our trusted reference. In the proposed architecture, we register that baseline through a Solidity smart contract on a private Ethereum-compatible blockchain.
+First, the administrator approves a device configuration known to be legitimate. The Raspberry Pi collects its parameters and generates the Base I2Map, our trusted reference. It sends that baseline to Host 3, where a Solidity smart contract stores it on a private Ethereum-compatible blockchain.
 
-Once the device is operating, we collect its parameters again to generate a runtime I2Map. The agent submits this map alongside the sensor data for verification.
+Once the device is operating, the Pi collects its parameters again and generates a runtime I2Map using SHA-256. It sends that map to the blockchain on Host 3. The blockchain then passes the runtime I2Map and the approved baseline to the verifier on Host 2, where the two digests are compared.
 
-If the runtime digest matches the baseline, the monitored state hasn't changed. In this proposed flow, the sensor data can then pass to the consumer. The check only covers the parameters we monitor, so a match doesn't guarantee that every sensor reading is accurate.
+If the runtime digest matches the baseline, the monitored state hasn't changed. In this proposed flow, the verifier releases the sensor data to the consumer. The check only covers the parameters we monitor, so a match doesn't guarantee that every sensor reading is accurate.
 
 ### Scenario 2: Reject and restore
 
 [Select Scenario 2: Reject & restore. Let it loop while explaining.]
 
-Here, connecting an unauthorised USB device changes a monitored parameter, so the new digest differs from the approved baseline. In the proposed flow, the system rejects the sensor data and alerts the administrator.
+Here, connecting an unauthorised USB device changes a monitored parameter. The Pi generates a new I2Map and sends it to the blockchain. The blockchain passes it to the verifier alongside the baseline. The verifier detects the mismatch, rejects the sensor data and alerts the administrator.
 
-The administrator then restores the approved configuration, and we check the device again. Once the digest matches, the system can accept data again. Throughout this scenario, the original baseline stays the same.
+The administrator then restores the approved configuration. The Pi generates another runtime I2Map, sends it to the blockchain, and the blockchain passes it to the verifier for another comparison. Once the digest matches, the verifier can accept data again. Throughout this scenario, the original baseline on the chain stays the same.
 
 ### Implementation, validation and demo handover
 
-What you're seeing is the architecture we're working towards. The repository contains Python integrity checks and a contract that stores and retrieves hashes. We still need to bring those components together for the full blockchain verification and sensor-data flow shown here.
+What you're seeing is the architecture we're working towards. The repository contains Python integrity checks and a contract that stores and retrieves hashes. We still need to bring those components together for the full flow from the Raspberry Pi to the blockchain and then to the verifier.
 
 To test the integrated system, we'll deliberately change software, network settings and configuration, and connect an unauthorised USB device. To measure false positives, we'll repeat checks without changing the device. We'll also record execution time, transaction commit time and memory usage.
 

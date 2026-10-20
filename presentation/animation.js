@@ -10,34 +10,43 @@
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const scenarios = [
     {
-      duration: 17,
-      actions: ['Collect device parameters', 'Generate SHA-256 I2Map', 'Register trusted baseline', 'Submit runtime I2Map', 'Compare integrity maps', 'Accept sensor data'],
+      duration: 20,
+      actions: ['Collect device parameters', 'Generate SHA-256 I2Map', 'Register trusted baseline', 'Send runtime I2Map to chain', 'Receive hashes & compare', 'Accept sensor data'],
       steps: [
         { end:1.6, action:0, routes:'approve parameter' },
-        { end:4.4, action:1, routes:'onboard' },
-        { end:7, action:2, routes:'register' },
-        { end:8, action:2, routes:'register', settled:true },
+        { end:3, action:1, routes:'digest' },
+        { end:6.2, action:2, routes:'submit' },
+        { end:7, action:2, routes:'store' },
+        { end:8, action:2, routes:'store', settled:true },
         { end:9, action:0, routes:'parameter' },
         { end:10.2, action:1, routes:'digest' },
-        { end:11.2, action:3, routes:'submit sensor' },
-        { end:12.4, action:4, routes:'baseline' },
-        { end:17, action:5, routes:'accept consumer', result:'match' }
+        { end:13, action:3, routes:'submit sensor' },
+        { end:14, action:4, routes:'forward' },
+        { end:15, action:4, routes:'baseline' },
+        { end:15.8, action:4, routes:'', status:'Comparing I2Maps' },
+        { end:20, action:5, routes:'accept consumer', result:'match' }
       ]
     },
     {
-      duration: 13,
-      actions: ['Detect USB state change', 'Generate changed I2Map', 'Compare integrity maps', 'Reject sensor data', 'Notify administrator', 'Restore approved state'],
+      duration: 22,
+      actions: ['Detect USB state change', 'Hash & submit changed I2Map', 'Receive hashes & compare', 'Reject sensor data', 'Notify administrator', 'Restore approved state'],
       steps: [
         { end:1.4, action:0, routes:'parameter' },
         { end:2.1, action:1, routes:'digest' },
-        { end:2.7, action:1, routes:'submit' },
-        { end:3.7, action:2, routes:'baseline' },
-        { end:4.7, action:3, routes:'reject', result:'mismatch' },
-        { end:9, action:4, routes:'alert', result:'mismatch' },
-        { end:10.5, action:5, routes:'approve' },
-        { end:11, action:5, routes:'parameter digest' },
-        { end:11.5, action:5, routes:'submit baseline' },
-        { end:13, action:5, routes:'accept consumer', result:'match' }
+        { end:4.7, action:1, routes:'submit sensor' },
+        { end:5.7, action:2, routes:'forward' },
+        { end:6.7, action:2, routes:'baseline' },
+        { end:7.4, action:2, routes:'', status:'Comparing I2Maps' },
+        { end:8.4, action:3, routes:'reject', result:'mismatch' },
+        { end:12.7, action:4, routes:'alert', result:'mismatch' },
+        { end:14.2, action:5, routes:'approve' },
+        { end:15.2, action:5, routes:'parameter' },
+        { end:15.8, action:5, routes:'digest' },
+        { end:18.4, action:5, routes:'submit sensor' },
+        { end:19.1, action:5, routes:'forward' },
+        { end:19.8, action:5, routes:'baseline' },
+        { end:20.3, action:5, routes:'', status:'Comparing I2Maps' },
+        { end:22, action:5, routes:'accept consumer', result:'match' }
       ]
     }
   ];
@@ -73,7 +82,7 @@
     const group = make('g', { visibility: 'hidden', 'data-route': pathId, 'data-kind': kind }, packetLayer);
     const color = colors[kind] || colors.digest;
     const compact = paths[pathId].length < 60;
-    if (kind === 'reference' || (kind === 'sensor' && compact)) {
+    if (kind === 'sensor' && compact) {
       make('circle', { r: 4, fill: color }, group);
     } else if (kind === 'raw') {
       make('rect', { x: -28, y: -11, width: 56, height: 22, rx: 4, fill: '#f4f1e9', stroke: color }, group);
@@ -101,9 +110,9 @@
   const packets = [
     packet('parameter-path', 'raw'),
     packet('digest-path', 'digest'),
-    packet('onboard-path', 'digest'), packet('register-path', 'digest'),
     packet('submit-path', 'digest'),
-    packet('baseline-path', 'reference'), packet('sensor-path', 'sensor'),
+    packet('store-path', 'digest'), packet('forward-path', 'digest'),
+    packet('baseline-path', 'digest'), packet('sensor-path', 'sensor'),
     packet('accept-path', 'sensor'), packet('consumer-path', 'sensor'),
     packet('reject-path', 'sensor'), packet('alert-path', 'alert'), packet('approve-path', 'digest')
   ];
@@ -202,7 +211,7 @@
     const tampered = phase === 'tampered';
     const stored = scenarioIndex === 1 || t >= 7;
     const result = step.result || 'pending';
-    const activeRoutes = new Set(step.routes.split(' ').map(route => `${route}-path`));
+    const activeRoutes = new Set(step.routes.split(' ').filter(Boolean).map(route => `${route}-path`));
     if (stepIndex !== lastStep) {
       svg.dataset.scenario = String(scenarioIndex);
       svg.dataset.phase = phase;
@@ -224,13 +233,15 @@
       ui.baseline.textContent = stored ? trustedDigest : '—';
       ui.comparison.textContent = result === 'match' ? `${trustedDigest} = ${trustedDigest}`
         : result === 'mismatch' ? `${changedDigest} ≠ ${trustedDigest}`
-        : stored ? 'Collecting runtime I2Map' : 'Registering Base I2Map';
+        : step.status || (activeRoutes.has('forward-path') ? 'Receiving runtime I2Map'
+          : activeRoutes.has('baseline-path') ? 'Receiving baseline'
+          : stored ? 'Awaiting runtime I2Map' : 'Baseline onboarding');
       ui.ledger.forEach(el => el.style.fill = stored ? colors.digest : '#d2d3c8');
       lastStep = stepIndex;
     }
     const rippleProgress = scenarioIndex === 0 && t >= 7 && t < 8 ? t - 7 : null;
     ui.ripple.style.opacity = rippleProgress === null || reduceMotion.matches ? 0 : (1 - rippleProgress) * .8;
-    if (rippleProgress !== null) ui.ripple.setAttribute('transform', `translate(988 241) scale(${1 + rippleProgress * .04}) translate(-988 -241)`);
+    if (rippleProgress !== null) ui.ripple.setAttribute('transform', `translate(1345 349) scale(${1 + rippleProgress * .04}) translate(-1345 -349)`);
     cloudParent.setAttribute('transform', `translate(392 305) rotate(${reduceMotion.matches ? 0 : seconds * 12})`);
     const nextCloudFrame = Math.floor(reduceMotion.matches ? 0 : seconds * 8);
     if (nextCloudFrame !== cloudFrame) {
@@ -240,11 +251,11 @@
     packets.forEach(p => {
       let progress = null;
       if (activeRoutes.has(p.pathId) && !step.settled) {
-        // Long administrator journeys get one uninterrupted flight; short streams repeat.
-        progress = ['onboard-path', 'register-path', 'alert-path', 'approve-path', 'reject-path'].includes(p.pathId)
-          ? travel(t, start, step.end) : flow(p, t - start, step.end - start, p.kind === 'reference' ? 45 : 90);
+        // Administrative and chain operations make one complete journey; client streams repeat.
+        progress = ['submit-path', 'store-path', 'forward-path', 'baseline-path', 'alert-path', 'approve-path', 'reject-path'].includes(p.pathId)
+          ? travel(t, start, step.end) : flow(p, t - start, step.end - start);
       }
-      drawPacket(p, progress, seconds, tampered && ['parameter-path', 'digest-path', 'submit-path', 'reject-path'].includes(p.pathId));
+      drawPacket(p, progress, seconds, tampered && ['parameter-path', 'digest-path', 'submit-path', 'forward-path', 'reject-path'].includes(p.pathId));
     });
   }
 

@@ -82,43 +82,45 @@
         <div class="diagram-wrap">
           <svg id="system-diagram" viewBox="0 0 1576 550" role="img" aria-labelledby="system-title system-desc">
             <title id="system-title">CyberScope onboarding and runtime attestation</title>
-            <desc id="system-desc">An administrator approves a device baseline. Selected parameters are hashed using SHA-256 and stored through a private Ethereum blockchain. The runtime digest is compared against the baseline. Matching monitored state allows sensor data through; changed state rejects data and alerts the administrator. This diagram depicts the proposed architecture.</desc>
+            <desc id="system-desc">Three separate hosts run a physical Raspberry Pi client, verifier service and private Ethereum blockchain. After administrator approval, Host 1 generates its Base I2Map using SHA-256 and sends it to Host 3's hash-storage contract. At runtime Host 1 sends a new I2Map to the blockchain. Host 3 forwards that runtime I2Map and the approved baseline to Host 2. The verifier compares them, accepts or rejects the sensor data and alerts the administrator on rejection. Restoration changes the Raspberry Pi configuration, not the approved baseline. This diagram depicts the proposed architecture.</desc>
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="context-stroke"/></marker>
               <clipPath id="hash-glyph-region"><path d="M454 305A62 62 0 1 0 330 305A62 62 0 1 0 454 305Z M337 280H447V329H337Z" clip-rule="evenodd"/></clipPath>
             </defs>
             <g class="zones">
-              <rect class="device-zone" x="36" y="155" width="710" height="322" rx="16"/>
-              <rect class="chain-zone" x="800" y="155" width="376" height="322" rx="16"/>
+              <rect id="client-host" class="device-zone" x="36" y="155" width="710" height="322" rx="16"/>
+              <rect id="verifier-host" class="verifier-zone" x="780" y="155" width="350" height="254" rx="16"/>
+              <rect id="blockchain-host" class="chain-zone" x="1170" y="155" width="350" height="254" rx="16"/>
             </g>
             <g class="zone-labels">
-              <text x="56" y="186">Raspberry Pi VM</text>
-              <text x="720" y="186" text-anchor="end" class="zone-detail">IoT test device</text>
-              <text x="820" y="186">Private Ethereum blockchain</text>
+              <text x="56" y="186">Host 1 · Client</text>
+              <text x="720" y="186" text-anchor="end" class="zone-detail">Physical Raspberry Pi</text>
+              <text x="800" y="186">Host 2 · Verifier</text>
+              <text x="1190" y="186">Host 3 · Blockchain</text>
             </g>
             <g class="connections" fill="none" marker-end="url(#arrow)">
               <path id="approve-path" d="M594 50H292Q272 50 272 70V190Q272 208 254 208H172Q154 208 154 226V230" class="admin-path"/>
-              <path id="onboard-path" d="M392 243V118Q392 100 410 100H656Q674 100 674 86" class="onboard-path"/>
-              <path id="register-path" d="M824 50H1182Q1200 50 1200 68V222Q1200 240 1182 240H1150" class="onboard-path"/>
               <path id="parameter-path" d="M252 305H330"/>
               <path id="digest-path" d="M454 305H534"/>
               <path id="sensor-path" d="M485 432H614Q632 432 632 414V375" class="sensor-path"/>
-              <path id="submit-path" d="M698 305H826"/>
-              <path id="baseline-path" d="M988 269V298" class="baseline-path"/>
-              <path id="accept-path" d="M1150 341H1220Q1238 341 1238 323V277Q1238 259 1256 259H1280" class="accept-path"/>
-              <path id="reject-path" d="M1150 369H1220Q1238 369 1238 387V415Q1238 433 1256 433H1280" class="reject-path"/>
-              <path id="consumer-path" d="M1400 296V325" class="accept-path"/>
-              <path id="alert-path" d="M1400 470V492Q1400 510 1418 510H1538Q1556 510 1556 492V20Q1556 2 1538 2H727Q709 2 709 14" class="alert-path"/>
+              <path id="submit-path" d="M698 305H740Q758 305 758 287V128Q758 110 776 110H1492Q1510 110 1510 128V240Q1510 254 1496 254"/>
+              <path id="store-path" d="M1345 289V321" class="baseline-path"/>
+              <path id="forward-path" d="M1194 254H1176Q1162 254 1162 267H1106" class="baseline-path"/>
+              <path id="baseline-path" d="M1194 349H1106" class="baseline-path"/>
+              <path id="accept-path" d="M900 379V420Q900 434 914 434V448" class="accept-path"/>
+              <path id="reject-path" d="M1040 379V411Q1040 429 1058 429H1368Q1386 429 1386 447V448" class="reject-path"/>
+              <path id="consumer-path" d="M1024 485H1040" class="accept-path"/>
+              <path id="alert-path" d="M1496 485H1538Q1556 485 1556 467V20Q1556 2 1538 2H727Q709 2 709 14" class="alert-path"/>
             </g>
             <g id="packet-layer" aria-hidden="true"></g>
             <g class="path-labels">
               <text data-routes="approve-path" x="340" y="28">Approve known-good state</text>
-              <text data-routes="onboard-path" x="430" y="132">Base I2Map</text>
-              <text data-routes="register-path" x="903" y="28">Register approved baseline</text>
-              <text data-routes="submit-path" x="705" y="286">Submit</text>
-              <text data-routes="accept-path" x="1248" y="207">Match</text>
-              <text data-routes="reject-path" x="1190" y="461">Mismatch</text>
-              <text data-routes="alert-path" x="1083" y="541" text-anchor="middle">Alert administrator / restore approved state</text>
+              <text data-routes="submit-path" x="1083" y="87" text-anchor="middle">Send I2Map to blockchain</text>
+              <text data-routes="forward-path" x="1150" y="240" text-anchor="middle">I2Map</text>
+              <text data-routes="baseline-path" x="1150" y="330" text-anchor="middle">Baseline</text>
+              <text data-routes="accept-path" x="955" y="397" text-anchor="middle">Match</text>
+              <text data-routes="reject-path" x="955" y="397" text-anchor="middle">Mismatch</text>
+              <text data-routes="alert-path" x="1083" y="546" text-anchor="middle">Alert administrator / restore approved state</text>
             </g>
             <g id="admin-node" class="node admin-node">
               <rect x="594" y="14" width="230" height="72" rx="12"/>
@@ -138,50 +140,54 @@
               <text x="392" y="298" text-anchor="middle" class="hash-title">SHA-256</text>
               <text x="392" y="321" text-anchor="middle" class="hash-sub">I2Map generator</text>
             </g>
-            <text data-routes="parameter-path digest-path onboard-path" x="392" y="397" text-anchor="middle" class="hash-caption">Parameters → digest</text>
+            <text data-routes="parameter-path digest-path" x="392" y="397" text-anchor="middle" class="hash-caption">Parameters → digest</text>
             <g class="node sensor-node"><rect x="300" y="408" width="185" height="48" rx="9"/><text x="392" y="438" text-anchor="middle">Sensor data</text></g>
             <g id="agent-node" class="node agent-node">
               <rect x="534" y="245" width="164" height="130" rx="12"/>
               <text x="616" y="275" text-anchor="middle">CyberScope</text>
               <text x="616" y="300" text-anchor="middle">attestation</text>
               <text x="616" y="325" text-anchor="middle">agent</text>
-              <text x="616" y="353" text-anchor="middle" class="node-sub">I2Map + sensor data</text>
-            </g>
-            <g id="baseline-node" class="node baseline-node">
-              <rect x="826" y="213" width="324" height="56" rx="9"/>
-              <text x="844" y="247">Base I2Map</text><text id="baseline-digest" x="1132" y="247" text-anchor="end" class="digest-text">—</text>
+              <text x="616" y="353" text-anchor="middle" class="node-sub">Submit I2Map</text>
             </g>
             <g id="verifier-node" class="node verifier-node">
-              <rect x="826" y="298" width="324" height="110" rx="12"/>
-              <text x="988" y="330" text-anchor="middle">Attestation smart contract</text>
-              <text x="988" y="357" text-anchor="middle" class="node-sub">Verifier nodes · compare I2Maps</text>
-              <text id="comparison-text" x="988" y="391" text-anchor="middle" class="comparison-text">Awaiting baseline</text>
+              <rect x="804" y="235" width="302" height="144" rx="12"/>
+              <text x="955" y="267" text-anchor="middle">Verifier service</text>
+              <text x="955" y="295" text-anchor="middle" class="node-sub">Compare runtime with baseline</text>
+              <text id="comparison-text" x="955" y="341" text-anchor="middle" class="comparison-text">Awaiting baseline</text>
             </g>
-            <g id="ledger-bars"><rect x="903" y="432" width="45" height="7" rx="2"/><rect x="966" y="432" width="45" height="7" rx="2"/><rect x="1029" y="432" width="45" height="7" rx="2"/></g>
-            <text x="988" y="461" text-anchor="middle" class="node-sub">Approved baseline remains unchanged</text>
+            <g id="contract-node" class="node contract-node">
+              <rect x="1194" y="219" width="302" height="70" rx="12"/>
+              <text x="1345" y="247" text-anchor="middle">Hash-storage contract</text>
+              <text x="1345" y="271" text-anchor="middle" class="node-sub">Private Ethereum · Solidity</text>
+            </g>
+            <g id="baseline-node" class="node baseline-node">
+              <rect x="1194" y="321" width="302" height="56" rx="9"/>
+              <text x="1210" y="355">Base I2Map</text><text id="baseline-digest" x="1480" y="355" text-anchor="end" class="digest-text">—</text>
+            </g>
+            <g id="ledger-bars"><rect x="1259" y="393" width="45" height="5" rx="2"/><rect x="1323" y="393" width="45" height="5" rx="2"/><rect x="1387" y="393" width="45" height="5" rx="2"/></g>
             <g id="accepted-node" class="node accepted-node">
-              <rect x="1280" y="221" width="240" height="75" rx="12"/>
-              <path d="M1299 245L1307 253L1322 237" class="outcome-icon"/>
-              <text x="1330" y="251">Accept sensor data</text>
-              <text x="1298" y="277" class="node-sub">Monitored state unchanged</text>
+              <rect x="804" y="448" width="220" height="74" rx="12"/>
+              <path d="M820 473L828 481L841 467" class="outcome-icon"/>
+              <text x="846" y="476">Accept sensor data</text>
+              <text x="818" y="503" class="node-sub">Monitored state unchanged</text>
             </g>
             <g id="consumer-node" class="node consumer-node">
-              <rect x="1280" y="325" width="240" height="61" rx="9"/>
-              <text x="1400" y="349" text-anchor="middle">Sensor-data consumer</text>
-              <text x="1400" y="376" text-anchor="middle" class="node-sub">IoT / autonomous system</text>
+              <rect x="1040" y="448" width="220" height="74" rx="9"/>
+              <text x="1150" y="476" text-anchor="middle">Sensor-data consumer</text>
+              <text x="1150" y="503" text-anchor="middle" class="node-sub">IoT / autonomous system</text>
             </g>
             <g id="rejected-node" class="node rejected-node">
-              <rect x="1280" y="396" width="240" height="74" rx="12"/>
-              <path d="M1300 417L1316 433M1316 417L1300 433" class="outcome-icon"/>
-              <text x="1330" y="426">Reject &amp; raise alert</text>
-              <text x="1298" y="452" class="node-sub">Changed state detected</text>
+              <rect x="1276" y="448" width="220" height="74" rx="12"/>
+              <path d="M1292 469L1308 485M1308 469L1292 485" class="outcome-icon"/>
+              <text x="1318" y="476">Reject &amp; raise alert</text>
+              <text x="1290" y="503" class="node-sub">Changed state detected</text>
             </g>
             <g id="tamper-marker" visibility="hidden">
               <rect x="70" y="408" width="170" height="48" rx="8"/>
               <path d="M86 423H103V440H86ZM91 423V416H98V423"/>
               <text x="113" y="439">USB added</text>
             </g>
-            <g id="storage-ripple" aria-hidden="true"><rect x="826" y="213" width="324" height="56" rx="9"/></g>
+            <g id="storage-ripple" aria-hidden="true"><rect x="1194" y="321" width="302" height="56" rx="9"/></g>
           </svg>
         </div>
         <div class="activity-controls">
@@ -202,19 +208,19 @@
         </div>
         <aside class="notes">
           <h3>Collect, hash, compare, decide</h3>
-          <p>Our test device is a Raspberry Pi VM. We use Python to collect selected hardware, software, network and configuration parameters. The environmental parameters we can monitor depend on the measurements available.</p>
+          <p>Our test device is a physical Raspberry Pi running the CyberScope client. The design uses three separate hosts for the client, the verifier and the blockchain. We use Python on the Pi to collect selected hardware, software, network and configuration parameters. The environmental parameters we can monitor depend on the measurements available.</p>
           <p>We then hash the collected values with SHA-256 to produce an integrity map, or I2Map. Hashing produces a digest; it doesn&#x27;t encrypt the values.</p>
           <h3>Scenario 1: Onboard and accept</h3>
           <p>[Select Scenario 1: Onboard &amp; accept. Let it loop while explaining.]</p>
-          <p>First, the administrator approves a device configuration known to be legitimate. We collect its parameters and generate the Base I2Map, our trusted reference. In the proposed architecture, we register that baseline through a Solidity smart contract on a private Ethereum-compatible blockchain.</p>
-          <p>Once the device is operating, we collect its parameters again to generate a runtime I2Map. The agent submits this map alongside the sensor data for verification.</p>
-          <p>If the runtime digest matches the baseline, the monitored state hasn&#x27;t changed. In this proposed flow, the sensor data can then pass to the consumer. The check only covers the parameters we monitor, so a match doesn&#x27;t guarantee that every sensor reading is accurate.</p>
+          <p>First, the administrator approves a device configuration known to be legitimate. The Raspberry Pi collects its parameters and generates the Base I2Map, our trusted reference. It sends that baseline to Host 3, where a Solidity smart contract stores it on a private Ethereum-compatible blockchain.</p>
+          <p>Once the device is operating, the Pi collects its parameters again and generates a runtime I2Map using SHA-256. It sends that map to the blockchain on Host 3. The blockchain then passes the runtime I2Map and the approved baseline to the verifier on Host 2, where the two digests are compared.</p>
+          <p>If the runtime digest matches the baseline, the monitored state hasn&#x27;t changed. In this proposed flow, the verifier releases the sensor data to the consumer. The check only covers the parameters we monitor, so a match doesn&#x27;t guarantee that every sensor reading is accurate.</p>
           <h3>Scenario 2: Reject and restore</h3>
           <p>[Select Scenario 2: Reject &amp; restore. Let it loop while explaining.]</p>
-          <p>Here, connecting an unauthorised USB device changes a monitored parameter, so the new digest differs from the approved baseline. In the proposed flow, the system rejects the sensor data and alerts the administrator.</p>
-          <p>The administrator then restores the approved configuration, and we check the device again. Once the digest matches, the system can accept data again. Throughout this scenario, the original baseline stays the same.</p>
+          <p>Here, connecting an unauthorised USB device changes a monitored parameter. The Pi generates a new I2Map and sends it to the blockchain. The blockchain passes it to the verifier alongside the baseline. The verifier detects the mismatch, rejects the sensor data and alerts the administrator.</p>
+          <p>The administrator then restores the approved configuration. The Pi generates another runtime I2Map, sends it to the blockchain, and the blockchain passes it to the verifier for another comparison. Once the digest matches, the verifier can accept data again. Throughout this scenario, the original baseline on the chain stays the same.</p>
           <h3>Implementation, validation and demo handover</h3>
-          <p>What you&#x27;re seeing is the architecture we&#x27;re working towards. The repository contains Python integrity checks and a contract that stores and retrieves hashes. We still need to bring those components together for the full blockchain verification and sensor-data flow shown here.</p>
+          <p>What you&#x27;re seeing is the architecture we&#x27;re working towards. The repository contains Python integrity checks and a contract that stores and retrieves hashes. We still need to bring those components together for the full flow from the Raspberry Pi to the blockchain and then to the verifier.</p>
           <p>To test the integrated system, we&#x27;ll deliberately change software, network settings and configuration, and connect an unauthorised USB device. To measure false positives, we&#x27;ll repeat checks without changing the device. We&#x27;ll also record execution time, transaction commit time and memory usage.</p>
           <p>We&#x27;ll now show the prototype&#x27;s current behaviour in the live demo.</p>
           <p>[Switch to the live demo.]</p>

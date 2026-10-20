@@ -425,9 +425,6 @@ html {
 #system-diagram .connections .admin-path {
   stroke:var(--muted);
 }
-#system-diagram .connections .onboard-path {
-  stroke:var(--cobalt);
-}
 #system-diagram .connections .sensor-path {
   stroke:var(--teal);
 }
@@ -726,6 +723,16 @@ html {
 #system-diagram .zones .device-zone {
   fill:#e7edfc;
   stroke:#c5d1ea;
+}
+#system-diagram .zones .verifier-zone {
+  fill:#e5f0ec;
+  stroke:#b9d6cc;
+}
+#system-diagram .verifier-node rect {
+  stroke:var(--teal);
+}
+#system-diagram .contract-node rect {
+  stroke:var(--cobalt);
 }
 #system-diagram .zones .chain-zone {
   fill:#ece9de;
