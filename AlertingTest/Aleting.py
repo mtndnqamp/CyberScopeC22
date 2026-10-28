@@ -18,7 +18,7 @@ import requests
 # Prefer an environment variable so the URL isn't hardcoded/committed to source control.
 WEBHOOK_URL = os.environ.get(
     "DISCORD_WEBHOOK_URL",
-    "https://discord.com/api/webhooks/1549599307261411438/cYbyw2D0HTx1NVs8Wx5t7Yn4zqYXDhaOxSmTsJItXZ2pogWTFhoYaNsrRhZvTfivlTqL",
+    "https://discord.com/api/webhooks/xx/xx",
 )
 
 # Discord embed side-bar colors (decimal) by severity
